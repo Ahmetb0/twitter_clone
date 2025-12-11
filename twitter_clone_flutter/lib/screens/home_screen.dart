@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/nav_controller.dart'; // Sekme değiştirmek için gerekli
 import 'comment_screen.dart';
 import 'other_profile_screen.dart';
 
@@ -10,255 +11,415 @@ class HomeScreen extends StatelessWidget {
 
   final HomeController _homeController = Get.put(HomeController());
   final AuthController _authController = Get.find();
+  // NavController'a erişelim ki sekmeyi değiştirebilelim
+  final NavController _navController = Get.find();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.white, // Arka planı beyaz yapalım, daha temiz durur
+      backgroundColor: Colors.white,
+
+      // --- APP BAR (Minimalist & Temiz) ---
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0, // Gölgeyi kaldır
-        title: Obx(() => Text(
-              "Hoşgeldin, ${_authController.currentUser.value?.username}",
-              style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
-            )),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.blue),
-            onPressed: _homeController.fetchFeed,
-          )
-        ],
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+
+        // ORTA: Mavi Kuş Logosu
+        title: const Icon(Icons.flutter_dash, color: Colors.blue, size: 32),
+
+        // SOL: Kendi Profil Fotoğrafım (Tıklayınca Profil Sekmesine Gider)
+        leading: Padding(
+          padding: const EdgeInsets.all(10.0), // Biraz boşluk
+          child: GestureDetector(
+            onTap: () {
+              // Profil sekmesine (Index 2) geçiş yap
+              _navController.changeIndex(2);
+              // Profil verilerini de tazeleyelim
+              // (MainScreen'de zaten bu mantığı kurmuştuk ama garanti olsun)
+            },
+            child: CircleAvatar(
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: null, // İlerde resim eklenirse buraya gelecek
+              child: Text(
+                _authController.currentUser.value?.username[0].toUpperCase() ??
+                    "U",
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+            ),
+          ),
+        ),
+
+        // SAĞ: Boş (Yenile butonu kaldırıldı)
+        actions: const [],
+
+        // Alt Çizgi
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: Colors.grey.shade100, height: 1.0),
+        ),
       ),
-      body: Obx(() {
-        if (_homeController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return ListView.separated(
-          // Card yerine daha modern bir liste görünümü
-          itemCount: _homeController.tweets.length,
-          separatorBuilder: (context, index) =>
-              const Divider(height: 1, color: Colors.grey), // Çizgi ile ayır
-          itemBuilder: (context, index) {
-            final tweet = _homeController.tweets[index];
-            // Retweet kontrolü
-            final bool isRetweet = tweet.retweeterUsername != null;
 
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      // --- BODY ---
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _homeController.fetchFeed();
+        },
+        color: Colors.blue,
+        backgroundColor: Colors.white,
+        child: Obx(() {
+          if (_homeController.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (_homeController.tweets.isEmpty) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // --- RETWEET BAŞLIĞI (YENİ EKLENDİ) ---
-                  if (isRetweet)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 5, left: 35),
-                      child: GestureDetector(
-                        onTap: () {
-                          // RT yapan kişinin profiline git
-                          if (tweet.retweeterId != null) {
-                            Get.to(() =>
-                                OtherProfileScreen(userId: tweet.retweeterId!));
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            const Icon(Icons.repeat,
-                                size: 14, color: Colors.grey),
-                            const SizedBox(width: 5),
-                            Text(
-                              "${tweet.retweeterUsername} Retweetledi",
-                              style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- 1. SOL TARA (AVATAR) ---
-                      GestureDetector(
-                        onTap: () {
-                          // Kendi profilimiz değilse git
-                          if (tweet.userId !=
-                              _authController.currentUser.value?.id) {
-                            Get.to(
-                                () => OtherProfileScreen(userId: tweet.userId));
-                          }
-                        },
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.blue.shade50,
-                          child: Text(
-                            tweet.username.isNotEmpty
-                                ? tweet.username[0].toUpperCase()
-                                : "?",
-                            style: const TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(
-                          width: 12), // Avatar ile içerik arası boşluk
-
-                      // --- 2. SAĞ TARAF (İÇERİK) ---
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // İsim ve Tarih Satırı
-                            GestureDetector(
-                              onTap: () {
-                                if (tweet.userId !=
-                                    _authController.currentUser.value?.id) {
-                                  Get.to(() =>
-                                      OtherProfileScreen(userId: tweet.userId));
-                                }
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    tweet.username,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    "• ${tweet.date.length > 10 ? tweet.date.substring(0, 10) : tweet.date}",
-                                    style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            // Tweet Metni
-                            Text(
-                              tweet.content,
-                              style: const TextStyle(fontSize: 15, height: 1.3),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            // Etkileşim Butonları (Beğeni & Yorum & Retweet)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                // YORUM
-                                _buildActionButton(
-                                  icon: Icons.chat_bubble_outline,
-                                  color: Colors.grey,
-                                  count: tweet.commentCount,
-                                  onTap: () =>
-                                      Get.to(() => CommentScreen(tweet: tweet)),
-                                ),
-
-                                const SizedBox(width: 30),
-
-                                // BEĞENİ
-                                _buildActionButton(
-                                  icon: tweet.isLiked
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color:
-                                      tweet.isLiked ? Colors.red : Colors.grey,
-                                  count: tweet.likeCount,
-                                  onTap: () =>
-                                      _homeController.toggleLike(tweet),
-                                ),
-
-                                const SizedBox(width: 30),
-
-                                // RETWEET
-                                _buildActionButton(
-                                  icon: Icons.repeat,
-                                  color: tweet.isRetweeted
-                                      ? Colors.green
-                                      : Colors.grey,
-                                  count: tweet.retweetCount,
-                                  onTap: () =>
-                                      _homeController.toggleRetweet(tweet),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  Icon(Icons.feed_outlined,
+                      size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text("Akışın sessiz görünüyor.",
+                      style: TextStyle(color: Colors.grey.shade600)),
                 ],
               ),
             );
-          },
-        );
-      }),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          final txtController = TextEditingController();
-          Get.defaultDialog(
-            title: "Tweet At",
-            titleStyle: const TextStyle(fontWeight: FontWeight.bold),
-            content: TextField(
-              controller: txtController,
-              decoration: const InputDecoration(
-                hintText: "Neler oluyor?",
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            textConfirm: "Gönder",
-            textCancel: "İptal",
-            confirmTextColor: Colors.white,
-            buttonColor: Colors.blue,
-            onConfirm: () {
-              _homeController.postTweet(txtController.text);
-              Get.back();
+          }
+
+          return ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: _homeController.tweets.length,
+            separatorBuilder: (context, index) =>
+                Divider(height: 1, color: Colors.grey.shade100),
+            itemBuilder: (context, index) {
+              final tweet = _homeController.tweets[index];
+              final bool isRetweet = tweet.retweeterUsername != null;
+
+              return InkWell(
+                onTap: () => Get.to(() => CommentScreen(tweet: tweet)),
+                splashColor: const Color.fromARGB(0, 33, 149, 243)
+                    .withOpacity(0.05), // Hafif mavi dokunma efekti
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- RETWEET BİLGİSİ ---
+                      if (isRetweet)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6, left: 38),
+                          child: GestureDetector(
+                            onTap: () {
+                              if (tweet.retweeterId != null &&
+                                  tweet.retweeterId !=
+                                      _authController.currentUser.value?.id) {
+                                Get.to(() => OtherProfileScreen(
+                                    userId: tweet.retweeterId!));
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(Icons.repeat,
+                                    size: 14, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "${tweet.retweeterUsername} Retweetledi",
+                                  style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // --- AVATAR ---
+                          GestureDetector(
+                            onTap: () {
+                              if (tweet.userId !=
+                                  _authController.currentUser.value?.id) {
+                                Get.to(() =>
+                                    OtherProfileScreen(userId: tweet.userId));
+                              } else {
+                                _navController.changeIndex(
+                                    2); // Kendi fotomsa profile git
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.blue.shade50,
+                              child: Text(
+                                tweet.username.isNotEmpty
+                                    ? tweet.username[0].toUpperCase()
+                                    : "?",
+                                style: const TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          // --- İÇERİK ---
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Başlık (İsim + Kullanıcı Adı + Tarih)
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          if (tweet.userId !=
+                                              _authController
+                                                  .currentUser.value?.id) {
+                                            Get.to(() => OtherProfileScreen(
+                                                userId: tweet.userId));
+                                          } else {
+                                            _navController.changeIndex(2);
+                                          }
+                                        },
+                                        child: Text(
+                                          tweet.username,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight
+                                                  .w700, // Biraz daha kalın
+                                              fontSize: 16,
+                                              color: Colors.black),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    // Tarih (Daha sade)
+                                    Text(
+                                      "· ${tweet.date.length > 10 ? tweet.date.substring(5, 10) : tweet.date}",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 14),
+                                    ),
+                                    // "..." butonu kaldırıldı.
+                                  ],
+                                ),
+
+                                const SizedBox(height: 4),
+
+                                // Tweet Metni
+                                Text(
+                                  tweet.content,
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      height: 1.3,
+                                      color: Colors.black87),
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                // --- ETKİLEŞİM BUTONLARI (3'lü Yapı) ---
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      right:
+                                          40.0), // Sağdan biraz boşluk bırakarak sıkışmayı önle
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      // YORUM
+                                      _buildActionButton(
+                                        icon: Icons.chat_bubble_outline,
+                                        activeIcon:
+                                            Icons.chat_bubble, // Dolu ikon
+                                        color: Colors.grey.shade600,
+                                        activeColor: Colors.blue,
+                                        count: tweet.commentCount,
+                                        isActive: false,
+                                        onTap: () => Get.to(
+                                            () => CommentScreen(tweet: tweet)),
+                                      ),
+
+                                      // RETWEET
+                                      _buildActionButton(
+                                        icon: Icons.repeat,
+                                        activeIcon: Icons.repeat,
+                                        color: Colors.grey.shade600,
+                                        activeColor: Colors.green,
+                                        count: tweet.retweetCount,
+                                        isActive: tweet.isRetweeted,
+                                        onTap: () => _homeController
+                                            .toggleRetweet(tweet),
+                                      ),
+
+                                      // BEĞENİ
+                                      _buildActionButton(
+                                        icon: Icons.favorite_border,
+                                        activeIcon: Icons.favorite,
+                                        color: Colors.grey.shade600,
+                                        activeColor:
+                                            Colors.red, // Pembe/Kırmızı
+                                        count: tweet.likeCount,
+                                        isActive: tweet.isLiked,
+                                        onTap: () =>
+                                            _homeController.toggleLike(tweet),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
           );
-        },
+        }),
+      ),
+
+      // Floating Action Button (Tweet At)
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue,
+        shape: const CircleBorder(),
+        elevation: 3,
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
+        onPressed: () => _showTweetSheet(context),
       ),
     );
   }
 
-  // Kod tekrarını önlemek için yardımcı widget
-  Widget _buildActionButton(
-      {required IconData icon,
-      required Color color,
-      required int count,
-      required VoidCallback onTap}) {
+  // Modern Buton Widget'ı (Animasyonlu renk değişimi için ideal yapı)
+  Widget _buildActionButton({
+    required IconData icon,
+    required IconData activeIcon,
+    required Color color,
+    required Color activeColor,
+    required int count,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20), // Tıklama efekti yuvarlak olsun
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.all(5.0), // Tıklama alanını genişlet
+        padding: const EdgeInsets.symmetric(
+            horizontal: 8.0, vertical: 6.0), // Tıklama alanı rahat
         child: Row(
           children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 5),
-            Text(
-              count > 0 ? count.toString() : "",
-              style: TextStyle(color: color, fontSize: 13),
-            ),
+            Icon(isActive ? activeIcon : icon,
+                size: 19, color: isActive ? activeColor : color),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Text(count.toString(),
+                  style: TextStyle(
+                      color: isActive ? activeColor : color,
+                      fontSize: 13,
+                      fontWeight:
+                          isActive ? FontWeight.bold : FontWeight.normal)),
+            ]
           ],
         ),
       ),
+    );
+  }
+
+  // Tweet Atma Ekranı (Bottom Sheet)
+  void _showTweetSheet(BuildContext context) {
+    final txtController = TextEditingController();
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(
+            20, 15, 20, 0), // Klavye için alt padding otomatik ayarlanır
+        height: 600,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Üst Bar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text("İptal",
+                        style: TextStyle(color: Colors.black87, fontSize: 16))),
+                ElevatedButton(
+                  onPressed: () {
+                    _homeController.postTweet(txtController.text);
+                    Get.back();
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 8)),
+                  child: const Text("Gönder",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Yazı Alanı
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.grey.shade200,
+                  radius: 18,
+                  child: Text(
+                    _authController.currentUser.value?.username[0]
+                            .toUpperCase() ??
+                        "U",
+                    style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: TextField(
+                    controller: txtController,
+                    autofocus: true,
+                    maxLength: 280,
+                    maxLines: 8,
+                    decoration: const InputDecoration(
+                      hintText: "Neler oluyor?",
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(fontSize: 18, color: Colors.grey),
+                      counterText: "", // Sayacı gizle
+                    ),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 }

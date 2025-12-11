@@ -120,4 +120,49 @@ class OtherProfileController extends GetxController {
       print("Retweet hatası: $e");
     }
   }
+
+  Future<void> toggleLike(Tweet tweet) async {
+    final myId = _authController.currentUser.value?.id;
+    if (myId == null) return;
+
+    // 1. Optimistic Update (Sonuç gelmeden ekranı güncelle - Hız hissi için)
+    // Eski durumu sakla
+    bool originalLiked = tweet.isLiked;
+
+    if (tweet.isLiked) {
+      tweet.isLiked = false;
+      tweet.likeCount--;
+    } else {
+      tweet.isLiked = true;
+      tweet.likeCount++;
+    }
+    userTweets.refresh(); // Listeyi görsel olarak yenile
+
+    // 2. API İsteği
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiHelper.baseUrl}/toggle-like'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": myId,
+          "tweet_id": tweet.id,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        // Hata varsa eski haline döndür
+        tweet.isLiked = originalLiked;
+        tweet.likeCount =
+            originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;
+        userTweets.refresh();
+      }
+    } catch (e) {
+      // Hata varsa eski haline döndür
+      tweet.isLiked = originalLiked;
+      tweet.likeCount =
+          originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;
+      userTweets.refresh();
+      print("Like hatası: $e");
+    }
+  }
 }

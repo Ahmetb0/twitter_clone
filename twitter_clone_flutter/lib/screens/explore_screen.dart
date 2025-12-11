@@ -10,282 +10,377 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Controller'ları buluyoruz
     final ExploreController controller = Get.put(ExploreController());
     final AuthController authController = Get.find();
     final TextEditingController searchController = TextEditingController();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Temiz beyaz arka plan
+
+      // --- APP BAR (Arama Çubuğu) ---
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 16, // Kenar boşlukları
         title: Container(
-          height: 40,
+          height: 44,
           decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.grey.shade100, // Hafif gri kutu
+            borderRadius: BorderRadius.circular(25), // Yuvarlak köşeler
           ),
           child: TextField(
             controller: searchController,
+            textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
               hintText: "Kullanıcı Ara...",
-              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 16),
               border: InputBorder.none,
-              prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
+              prefixIcon:
+                  Icon(Icons.search, color: Colors.grey.shade500, size: 22),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear, color: Colors.grey[600], size: 18),
+                icon: Icon(Icons.cancel, color: Colors.grey.shade400, size: 20),
                 onPressed: () {
                   searchController.clear();
                   controller.searchUsers("");
                   FocusScope.of(context).unfocus(); // Klavyeyi kapat
                 },
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
             ),
             onChanged: (val) => controller.searchUsers(val),
           ),
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: Colors.grey.shade100, height: 1.0),
+        ),
       ),
+
+      // --- BODY ---
       body: Obx(() {
-        // --- DURUM 1: ARAMA MODU (Kullanıcı Listesi) ---
+        // DURUM 1: ARAMA MODU (Kullanıcı Listesi)
         if (controller.isSearching.value) {
           if (controller.foundUsers.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search_off, size: 60, color: Colors.grey[300]),
-                  const SizedBox(height: 10),
-                  const Text("Kullanıcı bulunamadı",
-                      style: TextStyle(color: Colors.grey)),
+                  Icon(Icons.search_off_rounded,
+                      size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text("Kullanıcı bulunamadı",
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 16)),
                 ],
               ),
             );
           }
+          // Arama Sonuçları Listesi
           return ListView.separated(
             itemCount: controller.foundUsers.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
+            separatorBuilder: (context, index) =>
+                Divider(height: 1, color: Colors.grey.shade100),
             itemBuilder: (context, index) {
               final user = controller.foundUsers[index];
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-                leading: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.blue.shade50,
-                  child: Text(
-                    user.username[0].toUpperCase(),
-                    style: const TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.bold),
+              return InkWell(
+                onTap: () => Get.to(() => OtherProfileScreen(userId: user.id)),
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.grey.shade200,
+                        child: Text(
+                          user.username[0].toUpperCase(),
+                          style: const TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user.username,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black87),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Takip Et Butonu
+                      SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                user.isFollowing ? Colors.white : Colors.black,
+                            foregroundColor:
+                                user.isFollowing ? Colors.black : Colors.white,
+                            elevation: 0,
+                            side: BorderSide(
+                                color: user.isFollowing
+                                    ? Colors.grey.shade300
+                                    : Colors.transparent),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          onPressed: () => controller.toggleFollow(user),
+                          child: Text(
+                            user.isFollowing ? "Takip Ediliyor" : "Takip Et",
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                title: Text(
-                  user.username,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                trailing: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        user.isFollowing ? Colors.white : Colors.black,
-                    foregroundColor:
-                        user.isFollowing ? Colors.black : Colors.white,
-                    elevation: 0,
-                    side: BorderSide(
-                        color: user.isFollowing
-                            ? Colors.grey.shade300
-                            : Colors.transparent),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  ),
-                  onPressed: () => controller.toggleFollow(user),
-                  child: Text(
-                    user.isFollowing ? "Takip Ediliyor" : "Takip Et",
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                onTap: () {
-                  Get.to(() => OtherProfileScreen(userId: user.id));
-                },
               );
             },
           );
         }
 
-        // --- DURUM 2: NORMAL AKIŞ MODU (Tweet Listesi) ---
+        // DURUM 2: NORMAL AKIŞ MODU (Tweet Listesi)
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return ListView.separated(
-          itemCount: controller.allTweets.length,
-          separatorBuilder: (context, index) =>
-              const Divider(height: 1, color: Colors.grey),
-          itemBuilder: (context, index) {
-            final tweet = controller.allTweets[index];
-            final bool isMe =
-                tweet.userId == authController.currentUser.value?.id;
+        return RefreshIndicator(
+          onRefresh: () async => await controller.fetchExploreFeed(),
+          color: Colors.blue,
+          backgroundColor: Colors.white,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: controller.allTweets.length,
+            separatorBuilder: (context, index) =>
+                Divider(height: 1, color: Colors.grey.shade100),
+            itemBuilder: (context, index) {
+              final tweet = controller.allTweets[index];
+              final bool isMe =
+                  tweet.userId == authController.currentUser.value?.id;
 
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. AVATAR (SOL)
-                  GestureDetector(
-                    onTap: () {
-                      if (!isMe) {
-                        Get.to(() => OtherProfileScreen(userId: tweet.userId));
-                      }
-                    },
-                    child: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.blue.shade50,
-                      child: Text(
-                        tweet.username.isNotEmpty
-                            ? tweet.username[0].toUpperCase()
-                            : "?",
-                        style: const TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
+              // Explore sayfasında genelde karışık tweetler olduğu için
+              // "Retweetledi" bilgisini null güvenliğiyle kontrol ediyoruz.
+              final bool isRetweet = tweet.retweeterUsername != null;
 
-                  const SizedBox(width: 12),
+              return InkWell(
+                onTap: () => Get.to(() => CommentScreen(tweet: tweet)),
+                splashColor: Colors.transparent, // Mavi efekti kapattık
+                highlightColor: Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- RETWEET BİLGİSİ (Varsa) ---
+                      if (isRetweet)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6, left: 52),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.repeat,
+                                  size: 12, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Text(
+                                "${tweet.retweeterUsername} Retweetledi",
+                                style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
 
-                  // 2. İÇERİK (SAĞ)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // İsim, Tarih ve Takip Butonu
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Text(
-                                    tweet.username,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    "• ${tweet.date.length > 10 ? tweet.date.substring(0, 10) : tweet.date}",
-                                    style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13),
-                                  ),
-                                ],
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. AVATAR
+                          GestureDetector(
+                            onTap: () {
+                              if (!isMe) {
+                                Get.to(() =>
+                                    OtherProfileScreen(userId: tweet.userId));
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.grey.shade200,
+                              child: Text(
+                                tweet.username.isNotEmpty
+                                    ? tweet.username[0].toUpperCase()
+                                    : "?",
+                                style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16),
                               ),
                             ),
+                          ),
 
-                            // Takip Butonu (Eğer ben değilsem)
-                            if (!isMe)
-                              GestureDetector(
-                                onTap: () =>
-                                    controller.followUserFromTweet(tweet),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                      color: tweet.isFollowing
-                                          ? Colors.transparent
-                                          : Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                          color: tweet.isFollowing
-                                              ? Colors.grey.shade300
-                                              : Colors.transparent)),
-                                  child: Text(
-                                    tweet.isFollowing ? "Takipte" : "Takip Et",
-                                    style: TextStyle(
-                                        color: tweet.isFollowing
-                                            ? Colors.grey
-                                            : Colors.blue,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold),
-                                  ),
+                          const SizedBox(width: 12),
+
+                          // 2. İÇERİK
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Başlık
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        tweet.username,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
+                                            color: Colors.black),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      "· ${tweet.date.length > 10 ? tweet.date.substring(5, 10) : tweet.date}",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 14),
+                                    ),
+                                    const Spacer(),
+                                    // Keşfet'e özel küçük "Takip Et" butonu (Eğer takip etmiyorsak)
+                                    if (!isMe && !tweet.isFollowing)
+                                      GestureDetector(
+                                        onTap: () => controller
+                                            .followUserFromTweet(tweet),
+                                        child: Text(
+                                          "Takip Et",
+                                          style: TextStyle(
+                                              color: Colors.blue.shade700,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13),
+                                        ),
+                                      )
+                                  ],
                                 ),
-                              )
-                          ],
-                        ),
 
-                        const SizedBox(height: 4),
+                                const SizedBox(height: 4),
 
-                        // Tweet Metni
-                        Text(
-                          tweet.content,
-                          style: const TextStyle(fontSize: 15, height: 1.3),
-                        ),
+                                // Tweet Metni
+                                Text(
+                                  tweet.content,
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      height: 1.3,
+                                      color: Colors.black87),
+                                ),
 
-                        const SizedBox(height: 12),
+                                const SizedBox(height: 12),
 
-                        // Alt Butonlar
-                        Row(
-                          children: [
-                            _buildActionButton(
-                              icon: Icons.chat_bubble_outline,
-                              color: Colors.grey,
-                              count: tweet.commentCount,
-                              onTap: () =>
-                                  Get.to(() => CommentScreen(tweet: tweet)),
+                                // --- ALT BUTONLAR ---
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 30.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      // Yorum
+                                      _buildActionButton(
+                                        icon: Icons.chat_bubble_outline,
+                                        activeIcon: Icons.chat_bubble,
+                                        color: Colors.grey.shade600,
+                                        activeColor: Colors.blue,
+                                        count: tweet.commentCount,
+                                        isActive: false,
+                                        onTap: () => Get.to(
+                                            () => CommentScreen(tweet: tweet)),
+                                      ),
+                                      // Retweet
+                                      _buildActionButton(
+                                        icon: Icons.repeat,
+                                        activeIcon: Icons.repeat,
+                                        color: Colors.grey.shade600,
+                                        activeColor: Colors.green,
+                                        count: tweet.retweetCount,
+                                        isActive: tweet.isRetweeted,
+                                        onTap: () {
+                                          // ExploreController'da retweet fonksiyonu varsa buraya eklenir
+                                          // controller.toggleRetweet(tweet);
+                                        },
+                                      ),
+                                      // Beğeni
+                                      _buildActionButton(
+                                        icon: Icons.favorite_border,
+                                        activeIcon: Icons.favorite,
+                                        color: Colors.grey.shade600,
+                                        activeColor: Colors.red,
+                                        count: tweet.likeCount,
+                                        isActive: tweet.isLiked,
+                                        onTap: () =>
+                                            controller.toggleLike(tweet),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
-                            const SizedBox(width: 30),
-                            _buildActionButton(
-                              icon: tweet.isLiked
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: tweet.isLiked ? Colors.red : Colors.grey,
-                              count: tweet.likeCount,
-                              onTap: () => controller.toggleLike(tweet),
-                            ),
-                            const SizedBox(width: 30),
-                            _buildActionButton(
-                              icon: Icons.repeat,
-                              color: Colors.grey,
-                              count: 0,
-                              onTap: () {},
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            );
-          },
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         );
       }),
     );
   }
 
-  Widget _buildActionButton(
-      {required IconData icon,
-      required Color color,
-      required int count,
-      required VoidCallback onTap}) {
+  // Yardımcı Buton Widget'ı (HomeScreen ile aynı)
+  Widget _buildActionButton({
+    required IconData icon,
+    required IconData activeIcon,
+    required Color color,
+    required Color activeColor,
+    required int count,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 5),
-            Text(
-              count > 0 ? count.toString() : "",
-              style: TextStyle(color: color, fontSize: 13),
-            ),
+            Icon(isActive ? activeIcon : icon,
+                size: 18, color: isActive ? activeColor : color),
+            if (count > 0) ...[
+              const SizedBox(width: 4),
+              Text(count.toString(),
+                  style: TextStyle(
+                      color: isActive ? activeColor : color,
+                      fontSize: 12,
+                      fontWeight:
+                          isActive ? FontWeight.bold : FontWeight.normal)),
+            ]
           ],
         ),
       ),

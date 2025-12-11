@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/other_profile_controller.dart';
+import '../controllers/auth_controller.dart'; // Yönlendirme kontrolü için
 import 'comment_screen.dart';
 import 'follow_list_screen.dart';
 
@@ -13,14 +14,13 @@ class OtherProfileScreen extends StatefulWidget {
 }
 
 class _OtherProfileScreenState extends State<OtherProfileScreen> {
-  // Controller'ı bu sayfaya özel yapıyoruz (TAG KULLANIMI ÖNEMLİ)
   late OtherProfileController _controller;
+  // AuthController'ı bulalım ki "kendime tıklarsam" kontrolü yapabilelim
+  final AuthController _authController = Get.find();
 
   @override
   void initState() {
     super.initState();
-    // HER PROFİL İÇİN AYRI CONTROLLER OLUŞTURUYORUZ
-    // Eğer bunu yapmazsak Jason'ın profilinden Nwolfe'a gidince veriler karışır.
     _controller =
         Get.put(OtherProfileController(), tag: widget.userId.toString());
     _controller.loadProfile(widget.userId);
@@ -30,13 +30,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // --- APP BAR ---
       appBar: AppBar(
         title: const Text("Profil",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            const IconThemeData(color: Colors.black), // Geri butonu siyah
       ),
+
       body: Obx(() {
         if (_controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -44,12 +48,12 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
         return Column(
           children: [
-            // --- 1. ÜST KISIM (PROFİL BİLGİLERİ) ---
+            // --- 1. ÜST KISIM (KAPAK / BİLGİ) ---
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
               ),
               child: Column(
                 children: [
@@ -97,6 +101,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  // Takip Et Butonu
                   SizedBox(
                     width: double.infinity,
                     height: 35,
@@ -134,175 +139,200 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                   : ListView.separated(
                       itemCount: _controller.userTweets.length,
                       separatorBuilder: (context, index) =>
-                          const Divider(height: 1, color: Colors.grey),
+                          Divider(height: 1, color: Colors.grey.shade100),
                       itemBuilder: (context, index) {
                         final tweet = _controller.userTweets[index];
                         final bool isRetweet = tweet.retweeterUsername != null;
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // RETWEET BİLGİSİ
-                              if (isRetweet)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      bottom: 5, left: 35),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      // Retweetleyen kişinin profiline git (Eğer zaten orada değilsek)
-                                      if (tweet.retweeterId != null &&
-                                          tweet.retweeterId != widget.userId) {
-                                        Get.to(
-                                          () => OtherProfileScreen(
-                                              userId: tweet.retweeterId!),
-                                          preventDuplicates: false,
-                                        );
-                                      }
-                                    },
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.repeat,
-                                            size: 14, color: Colors.grey),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          "${tweet.retweeterUsername} Retweetledi",
-                                          style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // --- 1. AVATAR ---
-                                  GestureDetector(
-                                    onTap: () {
-                                      // KONTROL BURADA:
-                                      // Eğer tweetin sahibi (tweet.userId) şu an baktığımız profil (widget.userId) DEĞİLSE git.
-                                      if (tweet.userId != widget.userId) {
-                                        Get.to(
-                                          () => OtherProfileScreen(
-                                              userId: tweet.userId),
-                                          preventDuplicates: false,
-                                        );
-                                      }
-                                    },
-                                    child: CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: Colors.blue.shade50,
-                                      child: Text(
-                                        tweet.username.isNotEmpty
-                                            ? tweet.username[0].toUpperCase()
-                                            : "?",
-                                        style: const TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.bold),
+                        return InkWell(
+                          onTap: () =>
+                              Get.to(() => CommentScreen(tweet: tweet)),
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // --- RETWEET BİLGİSİ ---
+                                if (isRetweet)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 6, left: 52),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (tweet.retweeterId != null &&
+                                            tweet.retweeterId !=
+                                                _authController
+                                                    .currentUser.value?.id) {
+                                          Get.to(
+                                              () => OtherProfileScreen(
+                                                  userId: tweet.retweeterId!),
+                                              preventDuplicates: false);
+                                        }
+                                      },
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.repeat,
+                                              size: 14, color: Colors.grey),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "${tweet.retweeterUsername} Retweetledi",
+                                            style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
 
-                                  const SizedBox(width: 12),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // --- AVATAR (Kendime Tıklarsam Gitme, Başkasına Git) ---
+                                    GestureDetector(
+                                      onTap: () {
+                                        // Zaten bu profildeysek (widget.userId == tweet.userId) gitme
+                                        if (tweet.userId != widget.userId) {
+                                          Get.to(
+                                              () => OtherProfileScreen(
+                                                  userId: tweet.userId),
+                                              preventDuplicates: false);
+                                        }
+                                      },
+                                      child: CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor: Colors.blue.shade50,
+                                        child: Text(
+                                          tweet.username.isNotEmpty
+                                              ? tweet.username[0].toUpperCase()
+                                              : "?",
+                                          style: const TextStyle(
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18),
+                                        ),
+                                      ),
+                                    ),
 
-                                  // --- 2. İÇERİK ---
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // İSİM VE TARİH
-                                        GestureDetector(
-                                          onTap: () {
-                                            // KONTROL BURADA DA VAR
-                                            if (tweet.userId != widget.userId) {
-                                              Get.to(
-                                                () => OtherProfileScreen(
-                                                    userId: tweet.userId),
-                                                preventDuplicates: false,
-                                              );
-                                            }
-                                          },
-                                          child: Row(
+                                    const SizedBox(width: 12),
+
+                                    // --- İÇERİK ---
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // İSİM VE TARİH
+                                          Row(
                                             children: [
-                                              Text(tweet.username,
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16)),
+                                              Flexible(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    if (tweet.userId !=
+                                                        widget.userId) {
+                                                      Get.to(
+                                                          () =>
+                                                              OtherProfileScreen(
+                                                                  userId: tweet
+                                                                      .userId),
+                                                          preventDuplicates:
+                                                              false);
+                                                    }
+                                                  },
+                                                  child: Text(
+                                                    tweet.username,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
                                               const SizedBox(width: 5),
                                               Text(
-                                                  "• ${tweet.date.length > 10 ? tweet.date.substring(0, 10) : tweet.date}",
-                                                  style: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade600,
-                                                      fontSize: 13)),
+                                                "· ${tweet.date.length > 10 ? tweet.date.substring(5, 10) : tweet.date}",
+                                                style: TextStyle(
+                                                    color: Colors.grey.shade500,
+                                                    fontSize: 14),
+                                              ),
                                             ],
                                           ),
-                                        ),
 
-                                        const SizedBox(height: 4),
-                                        Text(tweet.content,
-                                            style: const TextStyle(
-                                                fontSize: 15, height: 1.3)),
+                                          const SizedBox(height: 4),
 
-                                        // ... (Alt butonlar aynı) ...
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            InkWell(
-                                              onTap: () => Get.to(() =>
-                                                  CommentScreen(tweet: tweet)),
-                                              child: Row(
-                                                children: [
-                                                  const Icon(
-                                                      Icons.chat_bubble_outline,
-                                                      size: 18,
-                                                      color: Colors.grey),
-                                                  const SizedBox(width: 5),
-                                                  Text(
-                                                      tweet.commentCount > 0
-                                                          ? tweet.commentCount
-                                                              .toString()
-                                                          : "",
-                                                      style: const TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 13)),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 30),
-                                            // Görsel RT Sayısı
-                                            Row(
+                                          // METİN
+                                          Text(tweet.content,
+                                              style: const TextStyle(
+                                                  fontSize: 15,
+                                                  height: 1.3,
+                                                  color: Colors.black87)),
+
+                                          const SizedBox(height: 12),
+
+                                          // --- ALT BUTONLAR ---
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 30.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
-                                                const Icon(Icons.repeat,
-                                                    size: 18,
-                                                    color: Colors.grey),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                    tweet.retweetCount > 0
-                                                        ? tweet.retweetCount
-                                                            .toString()
-                                                        : "",
-                                                    style: const TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 13)),
+                                                // YORUM
+                                                _buildActionButton(
+                                                  icon:
+                                                      Icons.chat_bubble_outline,
+                                                  activeIcon: Icons.chat_bubble,
+                                                  color: Colors.grey.shade600,
+                                                  activeColor: Colors.blue,
+                                                  count: tweet.commentCount,
+                                                  isActive: false,
+                                                  onTap: () => Get.to(() =>
+                                                      CommentScreen(
+                                                          tweet: tweet)),
+                                                ),
+
+                                                // RETWEET
+                                                _buildActionButton(
+                                                  icon: Icons.repeat,
+                                                  activeIcon: Icons.repeat,
+                                                  color: Colors.grey.shade600,
+                                                  activeColor: Colors.green,
+                                                  count: tweet.retweetCount,
+                                                  isActive: tweet.isRetweeted,
+                                                  onTap: () =>
+                                                      _controller.toggleRetweet(
+                                                          tweet), // Fonksiyon çalışacak
+                                                ),
+
+                                                // BEĞENİ (ARTIK ÇALIŞIYOR!)
+                                                _buildActionButton(
+                                                  icon: Icons.favorite_border,
+                                                  activeIcon: Icons.favorite,
+                                                  color: Colors.grey.shade600,
+                                                  activeColor: Colors.red,
+                                                  count: tweet.likeCount,
+                                                  isActive: tweet.isLiked,
+                                                  onTap: () =>
+                                                      _controller.toggleLike(
+                                                          tweet), // Yeni eklediğimiz fonksiyon
+                                                ),
                                               ],
                                             ),
-                                          ],
-                                        )
-                                      ],
+                                          )
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -314,18 +344,12 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  // ... OtherProfileScreen'in en altındaki _buildStat fonksiyonu ...
-
+  // Yardımcı İstatistik Widget'ı
   Widget _buildStat(String label, int count) {
     return InkWell(
-      // <--- InkWell ile sardık
       onTap: () {
-        // Hangi listeyi istiyoruz?
         String type = label == "Takipçi" ? "followers" : "following";
-
-        Get.to(() => FollowListScreen(
-            userId: widget.userId, // Şu an baktığımız profilin ID'si
-            type: type));
+        Get.to(() => FollowListScreen(userId: widget.userId, type: type));
       },
       child: Column(
         children: [
@@ -335,6 +359,41 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
           Text(label,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
         ],
+      ),
+    );
+  }
+
+  // Yardımcı Buton Widget'ı
+  Widget _buildActionButton({
+    required IconData icon,
+    required IconData activeIcon,
+    required Color color,
+    required Color activeColor,
+    required int count,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        child: Row(
+          children: [
+            Icon(isActive ? activeIcon : icon,
+                size: 19, color: isActive ? activeColor : color),
+            if (count > 0) ...[
+              const SizedBox(width: 4),
+              Text(count.toString(),
+                  style: TextStyle(
+                      color: isActive ? activeColor : color,
+                      fontSize: 13,
+                      fontWeight:
+                          isActive ? FontWeight.bold : FontWeight.normal)),
+            ]
+          ],
+        ),
       ),
     );
   }
