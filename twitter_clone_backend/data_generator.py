@@ -6,7 +6,7 @@ import random
 DB_HOST = "localhost"
 DB_NAME = "twitter_db"
 DB_USER = "postgres"
-DB_PASS = "12345"  # <-- Kendi pgAdmin şifreni buraya yaz!
+DB_PASS = "PASSWORD"  
 
 fake = Faker()
 
@@ -50,11 +50,11 @@ def generate_data():
             user_id = cur.fetchone()[0]
             user_ids.append(user_id)
         except:
-            conn.rollback() # Hata olursa (aynı isim denk gelirse) geç
+            conn.rollback() 
             continue
         conn.commit()
 
-    # 2. TWEETLER (TWEETS) - Her kullanıcı 2-3 tweet atsın
+    # 2. TWEETLER (TWEETS) 
     tweet_ids = []
     print("-> Tweetler ekleniyor...")
     for uid in user_ids:
@@ -67,10 +67,10 @@ def generate_data():
             tweet_ids.append(cur.fetchone()[0])
     conn.commit()
 
-    # 3. TAKİPLEŞME (FOLLOWS) - Rastgele takipleşmeler
+    # 3. TAKİPLEŞME (FOLLOWS) 
     print("-> Takipler oluşturuluyor...")
     for follower in user_ids:
-        # Kendisi hariç rastgele 3 kişiyi takip etsin
+       
         others = [u for u in user_ids if u != follower]
         targets = random.sample(others, k=min(len(others), 3))
         
@@ -87,7 +87,7 @@ def generate_data():
 
     # 4. BEĞENİLER (LIKES)
     print("-> Beğeniler atılıyor...")
-    for _ in range(30): # Toplam 30 beğeni dağıt
+    for _ in range(30): 
         uid = random.choice(user_ids)
         tid = random.choice(tweet_ids)
         try:
