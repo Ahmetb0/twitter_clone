@@ -10,25 +10,22 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Controller'ları buluyoruz
     final ExploreController controller = Get.put(ExploreController());
     final AuthController authController = Get.find();
     final TextEditingController searchController = TextEditingController();
 
     return Scaffold(
-      backgroundColor: Colors.white, // Temiz beyaz arka plan
-
-      // --- APP BAR (Arama Çubuğu) ---
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        titleSpacing: 16, // Kenar boşlukları
+        titleSpacing: 16,
         title: Container(
           height: 44,
           decoration: BoxDecoration(
-            color: Colors.grey.shade100, // Hafif gri kutu
-            borderRadius: BorderRadius.circular(25), // Yuvarlak köşeler
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(25),
           ),
           child: TextField(
             controller: searchController,
@@ -59,8 +56,6 @@ class ExploreScreen extends StatelessWidget {
           child: Container(color: Colors.grey.shade100, height: 1.0),
         ),
       ),
-
-      // --- BODY ---
       body: Obx(() {
         // DURUM 1: ARAMA MODU (Kullanıcı Listesi)
         if (controller.isSearching.value) {
@@ -174,13 +169,11 @@ class ExploreScreen extends StatelessWidget {
               final bool isMe =
                   tweet.userId == authController.currentUser.value?.id;
 
-              // Explore sayfasında genelde karışık tweetler olduğu için
-              // "Retweetledi" bilgisini null güvenliğiyle kontrol ediyoruz.
               final bool isRetweet = tweet.retweeterUsername != null;
 
               return InkWell(
                 onTap: () => Get.to(() => CommentScreen(tweet: tweet)),
-                splashColor: Colors.transparent, // Mavi efekti kapattık
+                splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -291,7 +284,7 @@ class ExploreScreen extends StatelessWidget {
 
                                 const SizedBox(height: 12),
 
-                                // --- ALT BUTONLAR ---
+                                //ALT BUTONLAR ( Yorum, Retweet, Beğeni )
                                 Padding(
                                   padding: const EdgeInsets.only(right: 30.0),
                                   child: Row(
@@ -317,10 +310,7 @@ class ExploreScreen extends StatelessWidget {
                                         activeColor: Colors.green,
                                         count: tweet.retweetCount,
                                         isActive: tweet.isRetweeted,
-                                        onTap: () {
-                                          // ExploreController'da retweet fonksiyonu varsa buraya eklenir
-                                          // controller.toggleRetweet(tweet);
-                                        },
+                                        onTap: () {},
                                       ),
                                       // Beğeni
                                       _buildActionButton(
