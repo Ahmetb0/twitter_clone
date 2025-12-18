@@ -3,13 +3,13 @@ from flask_cors import CORS
 import psycopg2
 
 app = Flask(__name__)
-CORS(app)  # Flutter'ın bu API'ye erişmesine izin verir
+CORS(app)  # Flutter'ın bu API'ye erişmesine izin ver
 
-# --- VERİTABANI AYARLARI ---
+
 DB_HOST = "localhost"
 DB_NAME = "twitter_db"
 DB_USER = "postgres"
-DB_PASS = "12345"  # <-- BURAYA KENDİ ŞİFRENİ YAZ (Az önce belirlediğin)
+DB_PASS = "PASSWORD"  
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -20,17 +20,17 @@ def get_db_connection():
     )
     return conn
 
-# 1. TEST NOKTASI
+
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "Twitter API Çalışıyor!"})
 
 
-# 3. TWEET ATMA
+# TWEET ATMA
 @app.route('/tweet', methods=['POST'])
 def post_tweet():
     data = request.json
-    user_id = data.get('user_id') # Uygulamadan gelen user id
+    user_id = data.get('user_id') 
     content = data.get('content')
     
     conn = get_db_connection()
@@ -47,7 +47,7 @@ def get_user_tweets(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # UNION SORGUSU GÜNCELLENDİ
+    
     query = """
         -- 1. KISIM: KULLANICININ KENDİ YAZDIĞI TWEETLER
         SELECT t.tweet_id, u.username, t.content, t.created_at, t.user_id,
@@ -102,12 +102,12 @@ def get_user_tweets(user_id):
             "retweet_count": row[8],
             "is_retweeted": row[9],
             "retweeter_username": row[10],
-            "retweeter_id": row[11]  # <--- JSON'A DA EKLEDIK
+            "retweeter_id": row[11] 
         })
     return jsonify(user_tweets)
 
 
-# 4. GİRİŞ YAPMA (Basit Simülasyon)
+# GİRİŞ YAPMA 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -131,7 +131,7 @@ def register():
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
-    # İstersen bio veya fotoğraf için default değer atayabilirsin
+ 
 
     if not username or not password or not email:
         return jsonify({"error": "Eksik bilgi"}), 400
@@ -205,9 +205,7 @@ def get_home_feed(user_id):
         ORDER BY created_at DESC
     """
     
-    # Parametreler (Sırası çok önemli):
-    # Kısım 1: is_liked, is_retweeted, follow_check, me_check
-    # Kısım 2: is_liked, is_retweeted, follow_check, me_check
+
     params = (user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id)
     
     try:
@@ -235,17 +233,17 @@ def get_home_feed(user_id):
         return jsonify(tweets)
         
     except Exception as e:
-        print(f"HATA: {e}") # Hatayı terminale yazdıralım
+        print(f"HATA: {e}") 
         if conn: conn.close()
         return jsonify({"error": str(e)}), 500
 
-# 2. KEŞFET AKIŞI (Tüm Tweetler - Eskiden /feed olan buydu)
+# 2. KEŞFET 
 @app.route('/explore-feed/<int:user_id>', methods=['GET'])
 def get_explore_feed(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Bu sorgu hem tweet detaylarını hem de benim o kişiyle ilişki durumumu çeker
+    
     query = """
         SELECT t.tweet_id, u.username, t.content, t.created_at, u.user_id,
         (SELECT COUNT(*) FROM likes WHERE tweet_id = t.tweet_id) AS like_count,
@@ -269,11 +267,11 @@ def get_explore_feed(user_id):
             "username": row[1],
             "content": row[2],
             "date": str(row[3]),
-            "user_id": row[4],    # Tweeti atanın ID'si (Takip etmek için lazım)
+            "user_id": row[4],   
             "like_count": row[5],
             "is_liked": row[6],
             "comment_count": row[7],
-            "is_following": row[8] # YENİ: Takip ediyor muyum?
+            "is_following": row[8] 
         })
     return jsonify(tweets)
 
@@ -281,8 +279,8 @@ def get_explore_feed(user_id):
 @app.route('/follow', methods=['POST'])
 def follow_user():
     data = request.json
-    follower_id = data.get('follower_id')   # Ben
-    followed_id = data.get('following_id') # Takip edilecek kişi
+    follower_id = data.get('follower_id')   
+    followed_id = data.get('following_id') 
     
     if follower_id == followed_id:
          return jsonify({"error": "Kendini takip edemezsin"}), 400
@@ -291,13 +289,13 @@ def follow_user():
     cur = conn.cursor()
     
     try:
-        # Zaten takip ediyor muyum?
+     
         cur.execute("SELECT * FROM follows WHERE follower_id = %s AND followed_id = %s", (follower_id, followed_id))
         if cur.fetchone():
-            # Zaten takip ediyorsa hata verme, başarılı say
+          
             return jsonify({"message": "Zaten takip ediyorsun"}), 200
 
-        # Takip et (Veritabanına ekle)
+       
         cur.execute("INSERT INTO follows (follower_id, followed_id) VALUES (%s, %s)", (follower_id, followed_id))
         conn.commit()
         cur.close()
@@ -313,13 +311,13 @@ def follow_user():
 def unfollow_user():
     data = request.json
     follower_id = data.get('follower_id')
-    followed_id = data.get('following_id') # Flutter aynı yapıda gönderir
+    followed_id = data.get('following_id') 
     
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
-        # Takipten çık (Siliyoruz)
+       
         cur.execute("DELETE FROM follows WHERE follower_id = %s AND followed_id = %s", (follower_id, followed_id))
         conn.commit()
         cur.close()
@@ -333,7 +331,7 @@ def unfollow_user():
 @app.route('/search', methods=['GET'])
 def search_users():
     query = request.args.get('q', '')
-    current_user_id = request.args.get('user_id') # Arama yapan kim?
+    current_user_id = request.args.get('user_id') 
 
     if not query or len(query) < 1:
         return jsonify([])
@@ -341,9 +339,7 @@ def search_users():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Bu SQL sorgusu biraz ileri seviye:
-    # Hem kullanıcıyı arıyor hem de 'follows' tablosuna bakıp
-    # "Arayan kişi (current_user_id), bulunan kişiyi (u.user_id) takip ediyor mu?" diye kontrol ediyor.
+  
     sql = """
         SELECT u.user_id, u.username, u.bio,
         CASE WHEN f.follower_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_following
@@ -363,7 +359,7 @@ def search_users():
             "id": row[0],
             "username": row[1],
             "bio": row[2],
-            "is_following": row[3] # True veya False dönecek
+            "is_following": row[3]
         })
         
     return jsonify(results)
@@ -372,8 +368,7 @@ def search_users():
     
 @app.route('/tweet/<int:tweet_id>', methods=['DELETE'])
 def delete_tweet(tweet_id):
-    # Silme işlemini yapan kişinin ID'sini URL parametresinden alalım
-    # Örnek kullanım: DELETE /tweet/25?user_id=12
+
     user_id = request.args.get('user_id')
 
     if not user_id:
@@ -383,7 +378,7 @@ def delete_tweet(tweet_id):
     cur = conn.cursor()
 
     try:
-        # Önce tweet gerçekten bu kullanıcıya mı ait kontrol edelim
+       
         cur.execute("SELECT * FROM tweets WHERE tweet_id = %s AND user_id = %s", (tweet_id, user_id))
         tweet = cur.fetchone()
 
@@ -392,7 +387,7 @@ def delete_tweet(tweet_id):
             conn.close()
             return jsonify({"error": "Tweet bulunamadı veya silme yetkiniz yok"}), 404
 
-        # Aitse silelim
+       
         cur.execute("DELETE FROM tweets WHERE tweet_id = %s", (tweet_id,))
         conn.commit()
         
@@ -416,15 +411,15 @@ def toggle_like():
     cur = conn.cursor()
     
     try:
-        # Zaten beğenmiş mi?
+       
         cur.execute("SELECT * FROM likes WHERE user_id = %s AND tweet_id = %s", (user_id, tweet_id))
         if cur.fetchone():
-            # Beğenmiş -> O zaman beğeniyi kaldır (Unlike)
+          
             cur.execute("DELETE FROM likes WHERE user_id = %s AND tweet_id = %s", (user_id, tweet_id))
             message = "Beğeni geri alındı"
             liked = False
         else:
-            # Beğenmemiş -> Beğeni ekle (Like)
+          
             cur.execute("INSERT INTO likes (user_id, tweet_id) VALUES (%s, %s)", (user_id, tweet_id))
             message = "Beğenildi"
             liked = True
@@ -439,13 +434,13 @@ def toggle_like():
         return jsonify({"error": str(e)}), 500    
     
 
-# 1. BİR TWEETİN YORUMLARINI GETİR
+
 @app.route('/comments/<int:tweet_id>', methods=['GET'])
 def get_comments(tweet_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # GÜNCELLENMİŞ SORGU: c.user_id eklendi
+   
     query = """
         SELECT c.content, u.username, c.user_id 
         FROM comments c
@@ -463,11 +458,11 @@ def get_comments(tweet_id):
         comments.append({
             "content": row[0],
             "username": row[1],
-            "user_id": row[2] # <--- YENİ: Yorumu yapanın ID'si
+            "user_id": row[2] 
         })
     return jsonify(comments)
 
-# 2. YORUM YAP
+
 @app.route('/comment', methods=['POST'])
 def post_comment():
     data = request.json
@@ -513,14 +508,14 @@ def update_profile():
     
 @app.route('/user-summary', methods=['GET'])
 def get_user_summary():
-    target_id = request.args.get('target_id')   # Profiline bakılan kişi
-    current_id = request.args.get('current_id') # Bakan kişi (Biz)
+    target_id = request.args.get('target_id')   
+    current_id = request.args.get('current_id') 
     
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
-        # 1. Kullanıcı bilgilerini ve Bio'yu al
+        
         cur.execute("SELECT username, bio FROM users WHERE user_id = %s", (target_id,))
         user_row = cur.fetchone()
         
@@ -530,15 +525,15 @@ def get_user_summary():
         username = user_row[0]
         bio = user_row[1]
         
-        # 2. Takipçi Sayısı (Onu takip edenler)
+      
         cur.execute("SELECT COUNT(*) FROM follows WHERE followed_id = %s", (target_id,))
         followers_count = cur.fetchone()[0]
         
-        # 3. Takip Edilen Sayısı (Onun takip ettikleri)
+     
         cur.execute("SELECT COUNT(*) FROM follows WHERE follower_id = %s", (target_id,))
         following_count = cur.fetchone()[0]
         
-        # 4. Ben bu kişiyi takip ediyor muyum?
+    
         is_following = False
         if current_id:
             cur.execute("SELECT * FROM follows WHERE follower_id = %s AND followed_id = %s", (current_id, target_id))
@@ -570,15 +565,15 @@ def toggle_retweet():
     cur = conn.cursor()
     
     try:
-        # Zaten RT yapmış mı?
+        
         cur.execute("SELECT * FROM retweets WHERE user_id = %s AND tweet_id = %s", (user_id, tweet_id))
         if cur.fetchone():
-            # Yapmış -> Geri al (Un-Retweet)
+           
             cur.execute("DELETE FROM retweets WHERE user_id = %s AND tweet_id = %s", (user_id, tweet_id))
             is_retweeted = False
             message = "Retweet geri alındı"
         else:
-            # Yapmamış -> RT yap
+          
             cur.execute("INSERT INTO retweets (user_id, tweet_id) VALUES (%s, %s)", (user_id, tweet_id))
             is_retweeted = True
             message = "Retweetlendi"
@@ -598,7 +593,7 @@ def get_follow_list(user_id, list_type):
     cur = conn.cursor()
     
     if list_type == 'followers':
-        # BENİ TAKİP EDENLER (Follower tablosunda ben 'followed' konumundayım)
+        
         query = """
             SELECT u.user_id, u.username, u.bio 
             FROM users u
@@ -606,7 +601,7 @@ def get_follow_list(user_id, list_type):
             WHERE f.followed_id = %s
         """
     elif list_type == 'following':
-        # BENİM TAKİP ETTİKLERİM (Follower tablosunda ben 'follower' konumundayım)
+       
         query = """
             SELECT u.user_id, u.username, u.bio 
             FROM users u
@@ -631,5 +626,5 @@ def get_follow_list(user_id, list_type):
     return jsonify(users)    
 
 if __name__ == '__main__':
-    # Host 0.0.0.0 diyerek ağdaki diğer cihazların (Emulator) erişmesine izin veriyoruz
+  
     app.run(debug=True, host='0.0.0.0', port=5032)
