@@ -6,10 +6,9 @@ import 'api_helper.dart';
 import 'auth_controller.dart';
 
 class HomeController extends GetxController {
-  var tweets = <Tweet>[].obs; // Obs: Değişince ekran güncellenir
+  var tweets = <Tweet>[].obs;
   var isLoading = true.obs;
 
-  // AuthController'a erişim (Kullanıcı ID'si için lazım)
   final AuthController authController = Get.find();
 
   @override
@@ -21,7 +20,6 @@ class HomeController extends GetxController {
   Future<void> fetchFeed() async {
     isLoading.value = true;
 
-    // AuthController'dan şu anki kullanıcının ID'sini alıyoruz
     final userId = authController.currentUser.value?.id;
 
     if (userId == null) {
@@ -30,7 +28,6 @@ class HomeController extends GetxController {
     }
 
     try {
-      // Artık /feed değil /feed/<user_id> adresine istek atıyoruz
       final response =
           await http.get(Uri.parse('${ApiHelper.baseUrl}/feed/$userId'));
 
@@ -48,7 +45,6 @@ class HomeController extends GetxController {
   Future<void> postTweet(String content) async {
     if (content.isEmpty) return;
 
-    // Veritabanına kaydet
     await http.post(
       Uri.parse('${ApiHelper.baseUrl}/tweet'),
       headers: {"Content-Type": "application/json"},
@@ -58,7 +54,6 @@ class HomeController extends GetxController {
       }),
     );
 
-    // Listeyi yenile
     fetchFeed();
   }
 
@@ -66,8 +61,6 @@ class HomeController extends GetxController {
     final myId = authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // 1. Optimistic Update (Sonuç gelmeden ekranı güncelle - Hız hissi için)
-    // Eski durumu sakla
     bool originalLiked = tweet.isLiked;
 
     if (tweet.isLiked) {
@@ -77,9 +70,8 @@ class HomeController extends GetxController {
       tweet.isLiked = true;
       tweet.likeCount++;
     }
-    tweets.refresh(); // Listeyi görsel olarak yenile
+    tweets.refresh();
 
-    // 2. API İsteği
     try {
       final response = await http.post(
         Uri.parse('${ApiHelper.baseUrl}/toggle-like'),
@@ -91,14 +83,12 @@ class HomeController extends GetxController {
       );
 
       if (response.statusCode != 200) {
-        // Hata varsa eski haline döndür
         tweet.isLiked = originalLiked;
         tweet.likeCount =
             originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;
         tweets.refresh();
       }
     } catch (e) {
-      // Hata varsa eski haline döndür
       tweet.isLiked = originalLiked;
       tweet.likeCount =
           originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;
@@ -111,7 +101,6 @@ class HomeController extends GetxController {
     final myId = authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // Optimistic Update (Anında renk değişimi)
     bool originalState = tweet.isRetweeted;
     if (tweet.isRetweeted) {
       tweet.isRetweeted = false;
@@ -120,7 +109,7 @@ class HomeController extends GetxController {
       tweet.isRetweeted = true;
       tweet.retweetCount++;
     }
-    tweets.refresh(); // Ekranı yenile
+    tweets.refresh();
 
     try {
       final response = await http.post(
@@ -130,7 +119,6 @@ class HomeController extends GetxController {
       );
 
       if (response.statusCode != 200) {
-        // Hata olursa geri al
         tweet.isRetweeted = originalState;
         tweet.retweetCount =
             originalState ? tweet.retweetCount + 1 : tweet.retweetCount - 1;

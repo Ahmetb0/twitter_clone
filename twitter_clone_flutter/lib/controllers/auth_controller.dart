@@ -7,7 +7,6 @@ import '../screens/home_screen.dart';
 import '../screens/main_screen.dart';
 
 class AuthController extends GetxController {
-  // Giriş yapmış kullanıcının bilgisini burada tutacağız
   var currentUser = Rxn<User>();
   var isLoading = false.obs;
 

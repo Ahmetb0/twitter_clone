@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/material.dart'; // Colors ve Snackbars için
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../models.dart';
@@ -8,29 +8,28 @@ import 'auth_controller.dart';
 
 class ExploreController extends GetxController {
   // Veriler
-  var allTweets = <Tweet>[].obs; // Tüm tweetler (Varsayılan görünüm)
+  var allTweets = <Tweet>[].obs; // Tüm tweetler
   var foundUsers = <User>[].obs; // Arama sonuçları
 
   // Durumlar
   var isLoading = true.obs;
-  var isSearching = false.obs; // Arama yapıyor mu?
+  var isSearching = false.obs;
 
   final AuthController _authController = Get.find();
 
   @override
   void onInit() {
-    fetchExploreFeed(); // Sayfa açılınca tweetleri çek
+    fetchExploreFeed();
     super.onInit();
   }
 
-  // 1. TÜM TWEETLERİ ÇEK (KEŞFET AKIŞI)
+  // KEŞFET AKIŞI
   Future<void> fetchExploreFeed() async {
     isLoading.value = true;
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
     try {
-      // Artık kendi ID'mizi de gönderiyoruz
       final response =
           await http.get(Uri.parse('${ApiHelper.baseUrl}/explore-feed/$myId'));
       if (response.statusCode == 200) {
@@ -71,7 +70,6 @@ class ExploreController extends GetxController {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // UI'da anında değişiklik olsun diye (Optimistic Update)
     user.isFollowing = !user.isFollowing;
     foundUsers.refresh(); // Listeyi görsel olarak yenile
 
@@ -132,10 +130,8 @@ class ExploreController extends GetxController {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // Kendini takip edemezsin
     if (tweet.userId == myId) return;
 
-    // Optimistic Update
     tweet.isFollowing = !tweet.isFollowing;
     allTweets.refresh();
 

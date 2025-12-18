@@ -18,13 +18,11 @@ class OtherProfileController extends GetxController {
 
   final AuthController _authController = Get.find();
 
-  // Sayfa açılırken çağıracağız
   Future<void> loadProfile(int targetUserId) async {
     isLoading.value = true;
     final myId = _authController.currentUser.value?.id;
 
     try {
-      // 1. Profil Özetini Çek (Bio, Takipçi vb.)
       final responseInfo = await http.get(Uri.parse(
           '${ApiHelper.baseUrl}/user-summary?target_id=$targetUserId&current_id=$myId'));
 
@@ -37,7 +35,6 @@ class OtherProfileController extends GetxController {
         isFollowing.value = data['is_following'];
       }
 
-      // 2. O Kullanıcının Tweetlerini Çek
       final responseTweets = await http
           .get(Uri.parse('${ApiHelper.baseUrl}/user-tweets/$targetUserId'));
 
@@ -57,7 +54,6 @@ class OtherProfileController extends GetxController {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // Optimistic Update
     isFollowing.value = !isFollowing.value;
     if (isFollowing.value) {
       followersCount.value++;
@@ -73,18 +69,15 @@ class OtherProfileController extends GetxController {
         body: jsonEncode({"follower_id": myId, "following_id": targetUserId}),
       );
     } catch (e) {
-      // Hata olursa geri al
       isFollowing.value = !isFollowing.value;
       Get.snackbar("Hata", "İşlem başarısız");
     }
   }
 
-  // --- EKSİK OLAN RETWEET FONKSİYONU ---
   Future<void> toggleRetweet(Tweet tweet) async {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // 1. Optimistic Update (Görünümü anında güncelle)
     bool originalState = tweet.isRetweeted;
 
     if (tweet.isRetweeted) {
@@ -94,9 +87,8 @@ class OtherProfileController extends GetxController {
       tweet.isRetweeted = true;
       tweet.retweetCount++;
     }
-    userTweets.refresh(); // Listeyi görsel olarak yenile
+    userTweets.refresh();
 
-    // 2. API İsteği
     try {
       final response = await http.post(
         Uri.parse('${ApiHelper.baseUrl}/retweet'),
@@ -105,7 +97,6 @@ class OtherProfileController extends GetxController {
       );
 
       if (response.statusCode != 200) {
-        // Hata olursa geri al
         tweet.isRetweeted = originalState;
         tweet.retweetCount =
             originalState ? tweet.retweetCount + 1 : tweet.retweetCount - 1;
@@ -125,8 +116,6 @@ class OtherProfileController extends GetxController {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // 1. Optimistic Update (Sonuç gelmeden ekranı güncelle - Hız hissi için)
-    // Eski durumu sakla
     bool originalLiked = tweet.isLiked;
 
     if (tweet.isLiked) {
@@ -136,9 +125,8 @@ class OtherProfileController extends GetxController {
       tweet.isLiked = true;
       tweet.likeCount++;
     }
-    userTweets.refresh(); // Listeyi görsel olarak yenile
+    userTweets.refresh();
 
-    // 2. API İsteği
     try {
       final response = await http.post(
         Uri.parse('${ApiHelper.baseUrl}/toggle-like'),
@@ -150,14 +138,12 @@ class OtherProfileController extends GetxController {
       );
 
       if (response.statusCode != 200) {
-        // Hata varsa eski haline döndür
         tweet.isLiked = originalLiked;
         tweet.likeCount =
             originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;
         userTweets.refresh();
       }
     } catch (e) {
-      // Hata varsa eski haline döndür
       tweet.isLiked = originalLiked;
       tweet.likeCount =
           originalLiked ? tweet.likeCount + 1 : tweet.likeCount - 1;

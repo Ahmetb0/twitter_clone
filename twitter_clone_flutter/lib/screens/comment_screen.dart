@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../models.dart';
 import '../controllers/api_helper.dart';
 import '../controllers/auth_controller.dart';
-import 'other_profile_screen.dart'; // <--- Import etmeyi unutma
+import 'other_profile_screen.dart';
 
 class CommentScreen extends StatefulWidget {
   final Tweet tweet;
@@ -82,7 +82,7 @@ class _CommentScreenState extends State<CommentScreen> {
       ),
       body: Column(
         children: [
-          // 1. TWEETİN KENDİSİ (Modern Tasarım)
+          // 1. TWEETİN KENDİSİ
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -183,7 +183,7 @@ class _CommentScreenState extends State<CommentScreen> {
                       ),
           ),
 
-          // 3. YORUM YAZMA ALANI (Alt Bar)
+          // 3. YORUM YAZMA
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(

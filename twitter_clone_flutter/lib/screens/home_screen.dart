@@ -213,11 +213,8 @@ class HomeScreen extends StatelessWidget {
 
                                 const SizedBox(height: 12),
 
-                                // --- ETKİLEŞİM BUTONLARI (3'lü Yapı) ---
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      right:
-                                          40.0), // Sağdan biraz boşluk bırakarak sıkışmayı önle
+                                  padding: const EdgeInsets.only(right: 40.0),
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -225,8 +222,7 @@ class HomeScreen extends StatelessWidget {
                                       // YORUM
                                       _buildActionButton(
                                         icon: Icons.chat_bubble_outline,
-                                        activeIcon:
-                                            Icons.chat_bubble, // Dolu ikon
+                                        activeIcon: Icons.chat_bubble,
                                         color: Colors.grey.shade600,
                                         activeColor: Colors.blue,
                                         count: tweet.commentCount,
@@ -252,8 +248,7 @@ class HomeScreen extends StatelessWidget {
                                         icon: Icons.favorite_border,
                                         activeIcon: Icons.favorite,
                                         color: Colors.grey.shade600,
-                                        activeColor:
-                                            Colors.red, // Pembe/Kırmızı
+                                        activeColor: Colors.red,
                                         count: tweet.likeCount,
                                         isActive: tweet.isLiked,
                                         onTap: () =>
@@ -287,7 +282,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Modern Buton Widget'ı (Animasyonlu renk değişimi için ideal yapı)
   Widget _buildActionButton({
     required IconData icon,
     required IconData activeIcon,
@@ -301,8 +295,7 @@ class HomeScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 8.0, vertical: 6.0), // Tıklama alanı rahat
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
         child: Row(
           children: [
             Icon(isActive ? activeIcon : icon,
@@ -322,13 +315,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Tweet Atma Ekranı (Bottom Sheet)
   void _showTweetSheet(BuildContext context) {
     final txtController = TextEditingController();
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.fromLTRB(
-            20, 15, 20, 0), // Klavye için alt padding otomatik ayarlanır
+        padding: const EdgeInsets.fromLTRB(20, 15, 20, 0),
         height: 600,
         decoration: const BoxDecoration(
           color: Colors.white,

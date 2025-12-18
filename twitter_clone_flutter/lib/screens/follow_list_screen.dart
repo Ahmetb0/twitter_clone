@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
-import '../models.dart'; // User modelini kullanacağız
+import '../models.dart';
 import '../controllers/api_helper.dart';
 import 'other_profile_screen.dart';
 
 class FollowListScreen extends StatefulWidget {
   final int userId;
-  final String type; // 'followers' veya 'following'
+  final String type; // followers veya following
 
   const FollowListScreen({super.key, required this.userId, required this.type});
 

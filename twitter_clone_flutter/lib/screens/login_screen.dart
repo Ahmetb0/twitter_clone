@@ -5,8 +5,7 @@ import 'register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _usernameController = TextEditingController();
-  final AuthController _authController =
-      Get.put(AuthController()); // Controller'ı yarat
+  final AuthController _authController = Get.put(AuthController());
 
   LoginScreen({super.key});
 
