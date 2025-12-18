@@ -12,7 +12,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      // MaterialApp yerine GetMaterialApp
       debugShowCheckedModeBanner: false,
       title: 'Twitter Clone',
       theme: ThemeData(

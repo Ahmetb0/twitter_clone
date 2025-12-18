@@ -7,8 +7,7 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
 
-  final AuthController _authController =
-      Get.find(); // LoginScreen'de create edildiği için find() yeterli
+  final AuthController _authController = Get.find();
 
   RegisterScreen({super.key});
 

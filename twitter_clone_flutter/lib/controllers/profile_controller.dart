@@ -12,7 +12,6 @@ class ProfileController extends GetxController {
   var followersCount = 0.obs;
   var followingCount = 0.obs;
 
-  // AuthController'dan giriş yapan kişinin ID'sini alacağız
   final AuthController _authController = Get.find();
 
   @override
@@ -47,13 +46,11 @@ class ProfileController extends GetxController {
     if (userId == null) return;
 
     try {
-      // URL'ye user_id parametresini ekliyoruz
       final response = await http.delete(
         Uri.parse('${ApiHelper.baseUrl}/tweet/$tweetId?user_id=$userId'),
       );
 
       if (response.statusCode == 200) {
-        // Başarılı! Listeden de silelim ki ekran güncellensin
         myTweets.removeWhere((tweet) => tweet.id == tweetId);
         Get.snackbar("Başarılı", "Tweet silindi",
             snackPosition: SnackPosition.BOTTOM,
@@ -73,7 +70,6 @@ class ProfileController extends GetxController {
     if (myId == null) return;
 
     try {
-      // Backend'deki user-summary endpoint'ini kendi ID'miz için kullanıyoruz
       final response = await http
           .get(Uri.parse('${ApiHelper.baseUrl}/user-summary?target_id=$myId'));
 
@@ -91,7 +87,6 @@ class ProfileController extends GetxController {
     final myId = _authController.currentUser.value?.id;
     if (myId == null) return;
 
-    // 1. Optimistic Update (Anında görüntü değişimi)
     bool originalState = tweet.isRetweeted;
 
     if (tweet.isRetweeted) {
@@ -101,9 +96,8 @@ class ProfileController extends GetxController {
       tweet.isRetweeted = true;
       tweet.retweetCount++;
     }
-    myTweets.refresh(); // Listeyi görsel olarak yenile
+    myTweets.refresh();
 
-    // 2. API İsteği
     try {
       final response = await http.post(
         Uri.parse('${ApiHelper.baseUrl}/retweet'),
@@ -112,7 +106,6 @@ class ProfileController extends GetxController {
       );
 
       if (response.statusCode != 200) {
-        // Hata olursa geri al
         tweet.isRetweeted = originalState;
         tweet.retweetCount =
             originalState ? tweet.retweetCount + 1 : tweet.retweetCount - 1;
@@ -120,7 +113,6 @@ class ProfileController extends GetxController {
         Get.snackbar("Hata", "İşlem başarısız");
       }
     } catch (e) {
-      // Hata olursa geri al
       tweet.isRetweeted = originalState;
       tweet.retweetCount =
           originalState ? tweet.retweetCount + 1 : tweet.retweetCount - 1;

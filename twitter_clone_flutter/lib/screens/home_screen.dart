@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/nav_controller.dart'; // Sekme değiştirmek için gerekli
+import '../controllers/nav_controller.dart';
 import 'comment_screen.dart';
 import 'other_profile_screen.dart';
 
@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
 
   final HomeController _homeController = Get.put(HomeController());
   final AuthController _authController = Get.find();
-  // NavController'a erişelim ki sekmeyi değiştirebilelim
+
   final NavController _navController = Get.find();
 
   @override
@@ -19,29 +19,22 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // --- APP BAR (Minimalist & Temiz) ---
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-
-        // ORTA: Mavi Kuş Logosu
         title: const Icon(Icons.flutter_dash, color: Colors.blue, size: 32),
-
-        // SOL: Kendi Profil Fotoğrafım (Tıklayınca Profil Sekmesine Gider)
         leading: Padding(
           padding: const EdgeInsets.all(10.0), // Biraz boşluk
           child: GestureDetector(
             onTap: () {
               // Profil sekmesine (Index 2) geçiş yap
               _navController.changeIndex(2);
-              // Profil verilerini de tazeleyelim
-              // (MainScreen'de zaten bu mantığı kurmuştuk ama garanti olsun)
             },
             child: CircleAvatar(
               backgroundColor: Colors.grey.shade200,
-              backgroundImage: null, // İlerde resim eklenirse buraya gelecek
+              backgroundImage: null,
               child: Text(
                 _authController.currentUser.value?.username[0].toUpperCase() ??
                     "U",
@@ -53,11 +46,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-
-        // SAĞ: Boş (Yenile butonu kaldırıldı)
         actions: const [],
-
-        // Alt Çizgi
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: Colors.grey.shade100, height: 1.0),
@@ -102,8 +91,8 @@ class HomeScreen extends StatelessWidget {
 
               return InkWell(
                 onTap: () => Get.to(() => CommentScreen(tweet: tweet)),
-                splashColor: const Color.fromARGB(0, 33, 149, 243)
-                    .withOpacity(0.05), // Hafif mavi dokunma efekti
+                splashColor:
+                    const Color.fromARGB(0, 33, 149, 243).withOpacity(0.05),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 12.0),
@@ -151,8 +140,7 @@ class HomeScreen extends StatelessWidget {
                                 Get.to(() =>
                                     OtherProfileScreen(userId: tweet.userId));
                               } else {
-                                _navController.changeIndex(
-                                    2); // Kendi fotomsa profile git
+                                _navController.changeIndex(2);
                               }
                             },
                             child: CircleAvatar(
@@ -195,8 +183,7 @@ class HomeScreen extends StatelessWidget {
                                         child: Text(
                                           tweet.username,
                                           style: const TextStyle(
-                                              fontWeight: FontWeight
-                                                  .w700, // Biraz daha kalın
+                                              fontWeight: FontWeight.w700,
                                               fontSize: 16,
                                               color: Colors.black),
                                           overflow: TextOverflow.ellipsis,
@@ -204,14 +191,12 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 5),
-                                    // Tarih (Daha sade)
                                     Text(
                                       "· ${tweet.date.length > 10 ? tweet.date.substring(5, 10) : tweet.date}",
                                       style: TextStyle(
                                           color: Colors.grey.shade500,
                                           fontSize: 14),
                                     ),
-                                    // "..." butonu kaldırıldı.
                                   ],
                                 ),
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/nav_controller.dart';
-import '../controllers/home_controller.dart'; // Eklendi
-import '../controllers/explore_controller.dart'; // Eklendi
-import '../controllers/profile_controller.dart'; // Eklendi
+import '../controllers/home_controller.dart';
+import '../controllers/explore_controller.dart';
+import '../controllers/profile_controller.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
 import 'profile_screen.dart';
@@ -13,7 +13,6 @@ class MainScreen extends StatelessWidget {
 
   final NavController _navController = Get.put(NavController());
 
-  // Sayfa listemiz
   final List<Widget> _pages = [
     HomeScreen(),
     const ExploreScreen(),
@@ -23,18 +22,14 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Body kısmı seçili index'e göre değişecek
       body: Obx(() => _pages[_navController.selectedIndex.value]),
-
       bottomNavigationBar: Obx(() => NavigationBar(
             backgroundColor: Colors.white,
             elevation: 5,
             selectedIndex: _navController.selectedIndex.value,
             onDestinationSelected: (index) {
-              // 1. Önce görsel olarak sekmeyi değiştir
               _navController.changeIndex(index);
 
-              // 2. ŞİMDİ VERİLERİ YENİLE (Magic Touch ✨)
               switch (index) {
                 case 0:
                   // Ana Sayfaya basıldıysa: Home Feed'i yenile

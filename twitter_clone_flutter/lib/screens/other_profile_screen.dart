@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/other_profile_controller.dart';
-import '../controllers/auth_controller.dart'; // Yönlendirme kontrolü için
+import '../controllers/auth_controller.dart';
 import 'comment_screen.dart';
 import 'follow_list_screen.dart';
 
@@ -15,7 +15,7 @@ class OtherProfileScreen extends StatefulWidget {
 
 class _OtherProfileScreenState extends State<OtherProfileScreen> {
   late OtherProfileController _controller;
-  // AuthController'ı bulalım ki "kendime tıklarsam" kontrolü yapabilelim
+
   final AuthController _authController = Get.find();
 
   @override
@@ -30,17 +30,13 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // --- APP BAR ---
       appBar: AppBar(
         title: const Text("Profil",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme:
-            const IconThemeData(color: Colors.black), // Geri butonu siyah
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-
       body: Obx(() {
         if (_controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -48,7 +44,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
         return Column(
           children: [
-            // --- 1. ÜST KISIM (KAPAK / BİLGİ) ---
+            // KAPAK / BİLGİ KISMI
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               decoration: BoxDecoration(
@@ -130,7 +126,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
               ),
             ),
 
-            // --- 2. ALT KISIM (TWEET LİSTESİ) ---
+            // TWEET LİSTESİ KISMI
             Expanded(
               child: _controller.userTweets.isEmpty
                   ? Center(
@@ -155,7 +151,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // --- RETWEET BİLGİSİ ---
+                                // RETWEET BİLGİSİ
                                 if (isRetweet)
                                   Padding(
                                     padding: const EdgeInsets.only(
@@ -192,7 +188,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // --- AVATAR (Kendime Tıklarsam Gitme, Başkasına Git) ---
                                     GestureDetector(
                                       onTap: () {
                                         // Zaten bu profildeysek (widget.userId == tweet.userId) gitme
@@ -220,7 +215,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
                                     const SizedBox(width: 12),
 
-                                    // --- İÇERİK ---
+                                    // İÇERİK
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -275,7 +270,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
                                           const SizedBox(height: 12),
 
-                                          // --- ALT BUTONLAR ---
+                                          // ALT BUTONLAR
                                           Padding(
                                             padding: const EdgeInsets.only(
                                                 right: 30.0),
@@ -311,7 +306,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                                                           tweet), // Fonksiyon çalışacak
                                                 ),
 
-                                                // BEĞENİ (ARTIK ÇALIŞIYOR!)
+                                                // BEĞENİ
                                                 _buildActionButton(
                                                   icon: Icons.favorite_border,
                                                   activeIcon: Icons.favorite,
@@ -319,9 +314,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                                                   activeColor: Colors.red,
                                                   count: tweet.likeCount,
                                                   isActive: tweet.isLiked,
-                                                  onTap: () =>
-                                                      _controller.toggleLike(
-                                                          tweet), // Yeni eklediğimiz fonksiyon
+                                                  onTap: () => _controller
+                                                      .toggleLike(tweet),
                                                 ),
                                               ],
                                             ),
@@ -344,7 +338,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  // Yardımcı İstatistik Widget'ı
   Widget _buildStat(String label, int count) {
     return InkWell(
       onTap: () {
@@ -363,7 +356,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  // Yardımcı Buton Widget'ı
   Widget _buildActionButton({
     required IconData icon,
     required IconData activeIcon,

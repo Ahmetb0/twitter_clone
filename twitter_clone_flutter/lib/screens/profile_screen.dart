@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/profile_controller.dart';
 import 'comment_screen.dart';
-import 'other_profile_screen.dart'; // Yönlendirme için gerekli
-import 'follow_list_screen.dart'; // Takipçi/ Takip Edilen listesi için
+import 'other_profile_screen.dart';
+import 'follow_list_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -35,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // --- 1. ÜST KISIM (KAPAK / BİLGİ) ---
+          // KAPAK / BİLGİ
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             decoration: BoxDecoration(
@@ -101,7 +101,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // --- 2. ALT KISIM (TWEET LİSTESİ) ---
+          // TWEET LİSTESİ
           Expanded(
             child: Obx(() {
               if (_profileController.isLoading.value) {
@@ -141,7 +141,7 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // --- RETWEET BAŞLIĞI ---
+                          // RETWEET BAŞLIĞI
                           if (isRetweet)
                             Padding(
                               padding:
@@ -165,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // --- 1. AVATAR (Yönlendirmeli) ---
+                              // 1. AVATAR (Yönlendirmeli)
                               GestureDetector(
                                 onTap: () {
                                   // Eğer bu tweet bana ait değilse (RT yapmışsam), sahibine git
@@ -192,7 +192,7 @@ class ProfileScreen extends StatelessWidget {
 
                               const SizedBox(width: 12),
 
-                              // --- 2. İÇERİK ---
+                              // 2. İÇERİK
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                                           ),
                                         ),
 
-                                        // SİLME BUTONU (Sadece kendi yazdığım tweetler için görünür)
+                                        // SİLME BUTONU
                                         if (!isRetweet)
                                           InkWell(
                                             onTap: () {
@@ -320,9 +320,6 @@ class ProfileScreen extends StatelessWidget {
                                             activeColor: Colors.red,
                                             count: tweet.likeCount,
                                             isActive: tweet.isLiked,
-                                            // NOT: ProfileController'da toggleLike fonksiyonu olması lazım.
-                                            // Eğer yoksa eklemen gerekir ya da homeController üzerinden çağırabilirsin.
-                                            // Şimdilik boş bırakıyorum veya eklemelisin.
                                             onTap: () {},
                                           ),
                                         ],
